@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Scanner - About Us</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Poppins:wght@300;400;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            overflow: hidden;
+            background: linear-gradient(45deg, #2b2d42, #8d99ae);
+            color: #ffffff;
+            display: flex;
+            height: 100vh;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 270px;
+            background-color: #1c1f2b;
+            color: #e0e0e0;
+            padding: 40px 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            height: 100%;
+            position: fixed;
+            top: 0;
+            left: 0;
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1;
+        }
+
+        .sidebar h2 {
+            color: #f4f4f9;
+            text-transform: uppercase;
+            margin-bottom: 35px;
+            font-family: 'Playfair Display', serif;
+            font-weight: 500;
+            letter-spacing: 2px;
+        }
+
+        .menu-item {
+            padding: 14px 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #e0e0e0;
+            font-weight: 400;
+            transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-item:hover {
+            background-color: #3b4a7b;
+            color: #ffffff;
+            transform: translateX(7px);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex-grow: 1;
+            padding: 40px;
+            margin-left: 270px;
+            background-color: #2b2d42;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .heading {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #f4f4f9;
+            margin-bottom: 40px;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        /* About Us Content */
+        .aboutus-container {
+            position: relative;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            background-color: #3b4a7b;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .aboutus-heading {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #ff4500;
+            margin-bottom: 15px;
+        }
+
+        .aboutus-content {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #f4f4f9;
+        }
+
+        .aboutus-content p {
+            margin: 15px 0;
+        }
+
+        .back-btn {
+            font-size: 1.3rem;
+            color: #ff4500;
+            cursor: pointer;
+            padding: 8px 20px;
+            border: 2px dashed #00FF41;
+            border-radius: 20px;
+            background-color: transparent;
+            transition: background-color 0.3s;
+            margin-top: 20px;
+        }
+
+        .back-btn:hover {
+            background-color: #00FF41;
+            color: #000;
+        }
+
+        /* Footer */
+        footer {
+            position: fixed;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            color: #ff4500;
+            font-size: 1rem;
+        }
+
+        /* Sidebar Animation */
+        @keyframes slideIn {
+            0% {
+                transform: translateX(-270px);
+            }
+            100% {
+                transform: translateX(0);
+            }
+        }
+
+        /* Show Sidebar */
+        .sidebar.open {
+            animation: slideIn 0.4s ease-out forwards;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar open" id="sidebar">
+        <h2>Network Scanner</h2>
+        <a href="/home" class="menu-item">Home</a>
+        <a href="/login" class="menu-item">Login</a>
+        <a href="/aboutus" class="menu-item">About Us</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="heading">About Us</div>
+        <div class="aboutus-container">
+            <div class="aboutus-heading">Welcome to Network Scanner</div>
+            <div class="aboutus-content">
+                <p>Network Scanner is designed to help users analyze and explore their networks easily.</p>
+                <p>We offer insights into IP addresses, open ports, device types, and more to help network administrators and enthusiasts understand their network better.</p>
+                <p>Our goal is to make network analysis simple and secure, enabling informed decisions.</p>
+                <p>Feel free to reach out if you have any questions or feedback.</p>
+                <br><br>
+                <p>Contact Aaditya Thacker at: <strong>adityasthacker@gmail.com</strong></p>
+            </div>
+            <button class="back-btn" onclick="window.location.href='/home'"></button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2024 Network Scanner. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // Toggle the sidebar menu
+        function toggleMenu() {
+            const menuItems = document.querySelector('.menu-items');
+            const hamburgerMenu = document.querySelector('.hamburger-menu');
+            if (menuItems.style.display === "block") {
+                menuItems.style.display = "none";
+                hamburgerMenu.classList.remove('active');
+            } else {
+                menuItems.style.display = "block";
+                hamburgerMenu.classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html>

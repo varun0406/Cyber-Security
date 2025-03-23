@@ -1,0 +1,246 @@
+Capstone frontend\templates\home.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Scanner - Home</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        /* Body and Background */
+        body {
+            background: linear-gradient(45deg, #2b2d42, #8d99ae); /* Gradient background */
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Navigation */
+        nav {
+            width: 100%;
+            background-color: #1c1f2b;
+            padding: 15px 0;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        nav ul {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+        }
+
+        nav li {
+            margin: 0 15px;
+        }
+
+        nav a {
+            color: #f4f4f9;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.1rem;
+            padding: 8px 15px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        nav a:hover {
+            background-color: #3b4a7b;
+            color: #ffffff;
+        }
+
+        /* Header */
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 500;
+            font-size: 2.5rem;
+            color: #f4f4f9;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Main Content */
+        .main-content {
+            background-color: #1c1f2b; /* Dark card background */
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            width: 80%;
+            max-width: 700px;
+            margin-top: 20px;
+        }
+
+        .main-content h2 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 500;
+            color: #f4f4f9;
+            margin-bottom: 20px;
+        }
+
+        .main-content p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: #d9d9d9;
+            margin-bottom: 30px;
+        }
+
+        /* Buttons */
+        .buttons-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #ffffff;
+            background: #005f73; /* Button color */
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            box-shadow: 0 5px 12px rgba(0, 95, 115, 0.3);
+        }
+
+        button:hover {
+            background: #3b4a7b; /* Hover color */
+            transform: scale(1.05);
+            box-shadow: 0 6px 20px rgba(59, 74, 123, 0.4);
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            text-align: center;
+            width: 80%;
+            max-width: 700px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Background Animation */
+        .starfield {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: transparent;
+            z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: #ffffff;
+            opacity: 0.8;
+            border-radius: 50%;
+            animation: star-animation 5s linear infinite;
+        }
+
+        @keyframes star-animation {
+            0% {
+                transform: translateY(0);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('home') }}">Home</a></li>
+            <li><a href="{{ url_for('hosts') }}">Devices</a></li>
+            <li><a href="{{ url_for('aboutus') }}">About Us</a></li>
+            <li><a href="{{ url_for('logout') }}">Logout</a></li>
+        </ul>
+    </nav>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <h1>Welcome {{ current_user.username }}!</h1>
+    
+    <div class="main-content">
+        <h2>Network Scanner Dashboard</h2>
+        <p>Welcome to the Network Scanner application. This tool helps you monitor devices on your network and detect unauthorized connections.</p>
+        
+        <div class="buttons-container">
+            <button onclick="window.location.href='{{ url_for('hosts') }}'">Scan Network</button>
+            <button onclick="window.location.href='{{ url_for('show_stored_devices') }}'">View Device History</button>
+        </div>
+    </div>
+
+    <div class="starfield" id="starfield"></div>
+
+    <script>
+        // Background animation
+        function createStars() {
+            const starfield = document.getElementById('starfield');
+            const starsCount = 100;
+            
+            for (let i = 0; i < starsCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                
+                // Random position
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                
+                // Random size
+                const size = Math.random() * 3;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                
+                // Random animation delay
+                star.style.animationDelay = `${Math.random() * 5}s`;
+                
+                starfield.appendChild(star);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', createStars);
+    </script>
+</body>
+</html>

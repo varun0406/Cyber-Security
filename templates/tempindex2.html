@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Network Scanner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Poppins:wght@300;400;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #1c1f2b;
+            --secondary-bg: #2b2d42;
+            --accent-color: #005f73;
+            --hover-color: #3b4a7b;
+            --text-color: #e0e0e0;
+            --white: #ffffff;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --card-bg: #242735;
+            --highlight-color: #ff6b6b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--secondary-bg), #8d99ae);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 270px;
+            background: var(--primary-bg);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            box-shadow: 0 6px 30px var(--shadow-color);
+            z-index: 10;
+        }
+
+        .sidebar h1 {
+            color: var(--white);
+            font-family: 'Playfair Display', serif;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .menu-item {
+            display: block;
+            text-decoration: none;
+            color: var(--text-color);
+            padding: 12px 20px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .menu-item:hover {
+            background: var(--hover-color);
+            color: var(--white);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 270px;
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .heading {
+            font-size: 2rem;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .search-bar {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-bar input {
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: none;
+            outline: none;
+            background: var(--card-bg);
+            color: var(--white);
+            font-size: 1rem;
+        }
+
+        .search-bar button {
+            background: var(--accent-color);
+            border: none;
+            color: var(--white);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: absolute;
+            right: 5px;
+        }
+
+        .buttons-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 20px;
+            background: var(--accent-color);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px var(--shadow-color);
+        }
+
+        .output-box {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px var(--shadow-color);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 15px var(--shadow-color);
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--primary-bg);
+        }
+
+        th {
+            background: var(--accent-color);
+            color: var(--white);
+        }
+
+        tr:hover {
+            background: var(--hover-color);
+        }
+
+        .loading-spinner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid var(--accent-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            z-index: 1000;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media screen and (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <h1>Advanced Scanner</h1>
+        <a href="/home" class="menu-item">Home</a>
+        <a href="/login" class="menu-item">Login</a>
+        <a href="/aboutus" class="menu-item">About Us</a>
+        <a href="/analytics" class="menu-item">Analytics</a>
+        <a href="/settings" class="menu-item">Settings</a>
+    </aside>
+
+    <main class="main-content">
+        <div class="dashboard-header">
+            <div class="heading">Network Scanner Dashboard</div>
+            <div class="search-bar">
+                <input type="text" placeholder="Search devices...">
+                <button>&#128269;</button>
+            </div>
+        </div>
+
+        <div class="buttons-container">
+            <button onclick="fetchNetworkDetails()">Scan Network</button>
+            <button onclick="viewStoredDevices()">View Stored Devices</button>
+            <button onclick="exportData()">Export Data</button>
+        </div>
+
+        <div class="card output-box" id="outputBox">Output will appear here soon...</div>
+        <div id="deviceTableContainer"></div>
+    </main>
+
+    <div class="loading-spinner" id="loadingSpinner" aria-label="Loading..."></div>
+
+    <script>
+        async function fetchNetworkDetails() {
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            loadingSpinner.style.display = 'block';
+
+            try {
+                const response = await fetch('/hosts');
+                const data = await response.json();
+
+                loadingSpinner.style.display = 'none';
+
+                const outputBox = document.getElementById('outputBox');
+                const deviceTableContainer = document.getElementById('deviceTableContainer');
+
+                if (data.devices.length === 0) {
+                    outputBox.innerHTML = `No devices found in the network.`;
+                } else {
+                    outputBox.innerHTML = `
+                        <strong>Current IP:</strong> ${data.current_ip}<br>
+                        <strong>Network Range:</strong> ${data.network_range}<br><br>
+                    `;
+                }
+
+                let tableHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>IP Address</th>
+                                <th>MAC Address</th>
+                                <th>Hostname</th>
+                                <th>Status</th>
+                                <th>Ports</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                data.devices.forEach(device => {
+                    let portsHTML = '';
+
+                    if (device.open_ports && device.open_ports.length > 0) {
+                        portsHTML = `
+                            <span class="expand-btn" onclick="togglePortList('${device.ip}')">Show Ports</span>
+                            <div class="port-list" id="ports-${device.ip}">
+                        `;
+
+                        device.open_ports.forEach(port => {
+                            portsHTML += `
+                                <div class="port-item">
+                                    <strong>Port:</strong> ${port.port} (${port.protocol}) 
+                                    <strong>Service:</strong> ${port.service || 'Unknown'}
+                                </div>
+                            `;
+                        });
+
+                        portsHTML += `</div>`;
+                    } else {
+                        portsHTML = 'No open ports detected.';
+                    }
+
+                    tableHTML += `
+                        <tr>
+                            <td>${device.ip}</td>
+                            <td>${device.mac}</td>
+                            <td>${device.hostname}</td>
+                            <td>${device.open_ports ? 'Open' : 'Closed'}</td>
+                            <td>${portsHTML}</td>
+                        </tr>
+                    `;
+                });
+
+                tableHTML += '</tbody></table>';
+                deviceTableContainer.innerHTML = tableHTML;
+            } catch (error) {
+                loadingSpinner.style.display = 'none';
+                console.error('Error fetching network details:', error);
+            }
+        }
+
+        function togglePortList(ip) {
+            const portList = document.getElementById(`ports-${ip}`);
+            const isVisible = portList.style.display === 'block';
+            portList.style.display = isVisible ? 'none' : 'block';
+        }
+
+        function viewStoredDevices() {
+            window.location.href = '/view_devices';
+        }
+
+        function exportData() {
+            alert('Feature coming soon: Export data to CSV or JSON.');
+        }
+    </script>
+</body>
+</html>

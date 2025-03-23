@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Scanner - Home</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #1db954;
+            --secondary-color: #333533;
+            --bg-dark: #121212;
+            --bg-light: #f5f5f5;
+            --text-dark: #ffffff;
+            --text-light: #000000;
+            --button-color: #14833b;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark), #3b4a7b);
+            color: var(--text-dark);
+            overflow-x: hidden;
+            transition: background-color 0.5s ease, color 0.5s ease;
+            padding-top: 60px; /* To prevent content from being hidden under the sticky header */
+        }
+
+        .light-mode {
+            --bg-dark: #f5f5f5;
+            --text-dark: #000000;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            transition: background-color 0.3s ease;
+        }
+
+        header h1 {
+            font-size: 24px;
+            font-family: 'Playfair Display', serif;
+            color: var(--primary-color);
+        }
+
+        header nav a {
+            color: var(--text-dark);
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 16px;
+            font-weight: 500;
+            transition: color 0.3s ease;
+        }
+
+        header nav a:hover {
+            color: var(--primary-color);
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            font-size: 20px;
+            color: var(--primary-color);
+            transition: color 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            color: var(--secondary-color);
+        }
+
+        .hero {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            background-image: url('https://www.w3schools.com/w3images/forestbridge.jpg');
+            background-position: center;
+            background-size: cover;
+            animation: fadeIn 2s ease-in-out;
+        }
+
+        .hero h2 {
+            font-size: 4rem;
+            color: var(--primary-color);
+            animation: slideIn 1s ease forwards;
+        }
+
+        .hero p {
+            font-size: 1.5rem;
+            margin-top: 20px;
+            color: var(--text-light);
+            opacity: 0;
+            animation: fadeInText 1.5s 0.5s forwards;
+        }
+
+        .hero button {
+            background: var(--primary-color);
+            color: var(--text-dark);
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.3s ease, background 0.3s ease;
+            margin-top: 20px;
+        }
+
+        .hero button:hover {
+            transform: scale(1.1);
+            background: var(--button-color);
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 50px 30px;
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 10px 15px rgba(0, 0, 0, 0.2);
+            animation: fadeInUp 1.5s ease-out;
+        }
+
+        .feature {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            text-align: center;
+            padding: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            color: var(--text-dark);
+            animation: featureSlideIn 0.5s ease-out;
+        }
+
+        .feature:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .feature i {
+            font-size: 40px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .feature h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        /* Testimonial Section */
+        .testimonials {
+            background: rgba(0, 0, 0, 0.7);
+            color: var(--text-light);
+            padding: 50px 30px;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .testimonials h2 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .testimonial-card {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
+            padding: 20px;
+            max-width: 300px;
+            margin: 0 auto;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .testimonial-card:hover {
+            transform: scale(1.05);
+        }
+
+        /* Footer */
+        .footer {
+            background: rgba(0, 0, 0, 0.8);
+            text-align: center;
+            padding: 20px;
+            color: var(--text-dark);
+            font-size: 14px;
+            margin-top: 50px;
+            opacity: 0;
+            animation: fadeInFooter 2s 0.5s forwards;
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInText {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            0% { transform: translateX(-50px); opacity: 0; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes fadeInUp {
+            0% { opacity: 0; transform: translateY(50px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes featureSlideIn {
+            0% { opacity: 0; transform: translateX(-50px); }
+            100% { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes fadeInFooter {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Network Scanner</h1>
+        <nav>
+            <a href="#features">Features</a>
+            <a href="#testimonials">Testimonials</a>
+            <a href="#contact">Contact</a>
+        </nav>
+        <i class="theme-toggle fas fa-moon" id="themeToggle"></i>
+    </header>
+
+    <section class="hero">
+        <h2>Empower Your Network</h2>
+        <p>Analyze, manage, and secure your network with ease.</p>
+        <button onclick="getStarted()">Get Started</button>
+    </section>
+
+    <section class="features" id="features">
+        <div class="feature">
+            <i class="fas fa-network-wired"></i>
+            <h3>Network Scanning</h3>
+            <p>Identify all connected devices with precision.</p>
+        </div>
+        <div class="feature">
+            <i class="fas fa-shield-alt"></i>
+            <h3>Enhanced Security</h3>
+            <p>Stay protected with comprehensive vulnerability checks.</p>
+        </div>
+        <div class="feature">
+            <i class="fas fa-chart-line"></i>
+            <h3>Real-Time Monitoring</h3>
+            <p>Keep an eye on your network in real-time.</p>
+        </div>
+    </section>
+
+    <section class="testimonials" id="testimonials">
+        <h2>What Our Users Say</h2>
+        <div class="testimonial-card">
+            <p>"This tool revolutionized how I monitor my network!"</p>
+            <h3>- John Doe</h3>
+        </div>
+    </section>
+
+    <footer class="footer">
+        &copy; 2024 Network Scanner | Privacy Policy | Terms of Service
+    </footer>
+
+    <script>
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            themeToggle.classList.toggle('fa-sun');
+            themeToggle.classList.toggle('fa-moon');
+        });
+
+        function getStarted() {
+            alert('Redirecting to Get Started Page...');
+        }
+    </script>
+</body>
+</html>

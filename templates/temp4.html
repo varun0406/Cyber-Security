@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Network Scanner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #0c1e3e;
+            --secondary-bg: #142850;
+            --accent-color: #00a8e8;
+            --hover-color: #02577a;
+            --text-color: #ffffff;
+            --card-bg: #1a3b5d;
+            --button-bg: #0072a8;
+            --shadow-color: rgba(0, 0, 0, 0.5);
+            --highlight-color: #29d9c2;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--secondary-bg);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            box-shadow: 0 6px 30px var(--shadow-color);
+        }
+
+        .sidebar h1 {
+            color: var(--accent-color);
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        .menu-item {
+            display: block;
+            text-decoration: none;
+            color: var(--text-color);
+            padding: 12px 20px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .menu-item:hover {
+            background: var(--hover-color);
+            color: var(--highlight-color);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            padding: 30px;
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .heading {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background: var(--card-bg);
+            border-radius: 30px;
+            padding: 8px 15px;
+        }
+
+        .search-bar input {
+            border: none;
+            background: transparent;
+            color: var(--text-color);
+            outline: none;
+            width: 250px;
+        }
+
+        .search-bar button {
+            background: var(--button-bg);
+            border: none;
+            color: var(--text-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .buttons-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 20px;
+            background: var(--button-bg);
+            color: var(--text-color);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background 0.3s ease, transform 0.3s ease;
+        }
+
+        button:hover {
+            background: var(--hover-color);
+            transform: translateY(-3px);
+        }
+
+        .output-box {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 15px var(--shadow-color);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--secondary-bg);
+        }
+
+        th {
+            background: var(--accent-color);
+            color: var(--text-color);
+        }
+
+        tr:hover {
+            background: var(--hover-color);
+        }
+
+        @media screen and (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <h1>Advanced Scanner</h1>
+        <a href="/home" class="menu-item">Home</a>
+        <a href="/login" class="menu-item">Login</a>
+        <a href="/aboutus" class="menu-item">About Us</a>
+        <a href="/analytics" class="menu-item">Analytics</a>
+        <a href="/settings" class="menu-item">Settings</a>
+    </aside>
+
+    <main class="main-content">
+        <div class="dashboard-header">
+            <div class="heading">Network Scanner Dashboard</div>
+            <div class="search-bar">
+                <input type="text" placeholder="Search devices...">
+                <button>&#128269;</button>
+            </div>
+        </div>
+
+        <div class="buttons-container">
+            <button onclick="fetchNetworkDetails()">Scan Network</button>
+            <button onclick="viewStoredDevices()">View Stored Devices</button>
+            <button onclick="exportData()">Export Data</button>
+        </div>
+
+        <div class="output-box" id="outputBox">Output will appear here...</div>
+    </main>
+
+    <script>
+        function fetchNetworkDetails() {
+            alert('Fetching network details...');
+        }
+
+        function viewStoredDevices() {
+            alert('Viewing stored devices...');
+        }
+
+        function exportData() {
+            alert('Exporting data...');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Network Scanner</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Poppins:wght@300;400;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-bg: #1c1f2b;
+            --secondary-bg: #2b2d42;
+            --accent-color: #005f73;
+            --hover-color: #3b4a7b;
+            --text-color: #e0e0e0;
+            --white: #ffffff;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --card-bg: #242735;
+            --highlight-color: #ff6b6b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--secondary-bg), #8d99ae);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: var(--primary-bg);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px var(--shadow-color);
+            position: fixed;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        .navbar h1 {
+            font-family: 'Playfair Display', serif;
+            color: var(--white);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .nav-item {
+            position: relative;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .nav-item > a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: var(--card-bg);
+            box-shadow: 0 4px 10px var(--shadow-color);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .dropdown a {
+            display: block;
+            padding: 10px 20px;
+            color: var(--white);
+            text-decoration: none;
+        }
+
+        .dropdown a:hover {
+            background: var(--hover-color);
+        }
+
+        .nav-item:hover .dropdown {
+            display: block;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            background: var(--primary-bg);
+            color: var(--text-color);
+            position: fixed;
+            top: 60px;
+            left: 0;
+            height: calc(100% - 60px);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 6px 30px var(--shadow-color);
+        }
+
+        .sidebar a {
+            text-decoration: none;
+            color: var(--text-color);
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .sidebar a:hover {
+            background: var(--hover-color);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 250px;
+            margin-top: 60px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .scan-options {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .scan-options button {
+            flex: 1;
+            padding: 15px;
+            font-size: 1rem;
+            font-weight: 500;
+            background: var(--accent-color);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .scan-options button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px var(--shadow-color);
+        }
+
+        .output-container {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px var(--shadow-color);
+        }
+
+        /* Media Queries */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: static;
+                top: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+                margin-top: 0;
+            }
+
+            .navbar {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <header class="navbar">
+        <h1>Advanced Scanner</h1>
+        <div class="nav-links">
+            <div class="nav-item">
+                <a href="#">Tools</a>
+                <div class="dropdown">
+                    <a href="#">Recon Tools</a>
+                    <a href="#">Port Scanner</a>
+                    <a href="#">Traceroute</a>
+                </div>
+            </div>
+            <div class="nav-item">
+                <a href="#">Settings</a>
+                <div class="dropdown">
+                    <a href="#">Preferences</a>
+                    <a href="#">Update</a>
+                    <a href="#">Help</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <a href="/home">Home</a>
+        <a href="/login">Login</a>
+        <a href="/aboutus">About Us</a>
+        <a href="/analytics">Analytics</a>
+        <a href="/settings">Settings</a>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="dashboard-header">
+            <h2>Network Scanner Dashboard</h2>
+        </div>
+
+        <div class="scan-options">
+            <button>Light Scan</button>
+            <button>Deep Scan</button>
+            <button>Custom Scan</button>
+        </div>
+
+        <div class="output-container">
+            <p>Output will appear here...</p>
+        </div>
+    </main>
+</body>
+</html>
