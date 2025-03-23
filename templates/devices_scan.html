@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Scanner - Device Scan</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        /* Body and Background */
+        body {
+            background: linear-gradient(45deg, #2b2d42, #8d99ae);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Navigation */
+        nav {
+            width: 100%;
+            background-color: #1c1f2b;
+            padding: 15px 0;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        nav ul {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+        }
+
+        nav li {
+            margin: 0 15px;
+        }
+
+        nav a {
+            color: #f4f4f9;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.1rem;
+            padding: 8px 15px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        nav a:hover {
+            background-color: #3b4a7b;
+            color: #ffffff;
+        }
+
+        /* Header */
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 500;
+            font-size: 2.5rem;
+            color: #f4f4f9;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* Network Info Box */
+        .network-info {
+            background-color: #1c1f2b;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.3);
+            text-align: left;
+            width: 90%;
+            max-width: 1000px;
+            margin-bottom: 20px;
+        }
+
+        .network-info p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: #d9d9d9;
+            margin-bottom: 10px;
+        }
+
+        /* Device Table */
+        .device-table {
+            background-color: #1c1f2b;
+            border-radius: 12px;
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 1000px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #3b4a7b;
+        }
+
+        th {
+            background-color: #005f73;
+            color: #f4f4f9;
+            font-weight: 500;
+        }
+
+        tr:hover {
+            background-color: #2d3142;
+        }
+
+        .blacklisted {
+            background-color: rgba(230, 57, 70, 0.3);
+        }
+
+        /* Buttons */
+        .action-button, button {
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #ffffff;
+            background: #005f73;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-button:hover, button:hover {
+            background: #3b4a7b;
+            transform: scale(1.05);
+        }
+
+        .blacklist-button {
+            background-color: #e63946;
+        }
+
+        .blacklist-button:hover {
+            background-color: #c1121f;
+        }
+
+        .refresh-button {
+            margin-left: 10px;
+        }
+
+        /* Port list */
+        .port-list {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #2d3142;
+            border-radius: 8px;
+        }
+
+        .port-item {
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+
+        /* Loading spinner */
+        .loading-spinner {
+            display: none;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #005f73;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Alert Messages */
+        .alert {
+            padding: 12px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            text-align: center;
+            width: 90%;
+            max-width: 1000px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Back button */
+        .back-button {
+            margin-top: 20px;
+            padding: 12px 25px;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('home') }}">Home</a></li>
+            <li><a href="{{ url_for('hosts') }}">Scan Network</a></li>
+            <li><a href="{{ url_for('show_stored_devices') }}">Device History</a></li>
+            <li><a href="{{ url_for('view_blacklist') }}">Blacklist</a></li>
+            <li><a href="{{ url_for('aboutus') }}">About Us</a></li>
+            <li><a href="{{ url_for('logout') }}">Logout</a></li>
+        </ul>
+    </nav>
+    
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <h1>Network Device Scan</h1>
+    
+    <div class="network-info">
+        <p><strong>Current IP:</strong> {{ current_ip }}</p>
+        <p><strong>Network Range:</strong> {{ network_range }}</p>
+        <button onclick="window.location.reload()" class="refresh-button">Refresh Scan</button>
+    </div>
+    
+    <div class="device-table">
+        {% if devices %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>IP Address</th>
+                        <th>MAC Address</th>
+                        <th>Hostname</th>
+                        <th>Status</th>
+                        <th>Ports</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for device in devices %}
+                        <tr {% if device.is_blacklisted %}class="blacklisted"{% endif %}>
+                            <td>{{ device.ip }}</td>
+                            <td>{{ device.mac }}</td>
+                            <td>{{ device.hostname }}</td>
+                            <td>{% if device.is_blacklisted %}Blacklisted{% else %}Active{% endif %}</td>
+                            <td>
+                                <button onclick="scanPorts('{{ device.ip }}', this)">Scan Ports</button>
+                                <div id="ports-{{ device.ip }}" class="port-list"></div>
+                                <div id="spinner-{{ device.ip }}" class="loading-spinner"></div>
+                            </td>
+                            <td>
+                                {% if not device.is_blacklisted %}
+                                    <button class="action-button blacklist-button" onclick="addToBlacklist('{{ device.mac }}')">
+                                        Add to Blacklist
+                                    </button>
+                                {% else %}
+                                    <button class="action-button" onclick="removeFromBlacklist('{{ device.mac }}')">
+                                        Remove from Blacklist
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div style="padding: 20px; text-align: center;">
+                <p>No devices found on the network.</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <button onclick="window.location.href='{{ url_for('home') }}'" class="back-button">Back to Home</button>
+
+    <script>
+        async function scanPorts(ip, button) {
+            // Show loading spinner and disable button
+            const spinner = document.getElementById(`spinner-${ip}`);
+            spinner.style.display = 'block';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch(`/scan_port?ip=${ip}`);
+                const data = await response.json();
+                
+                const portList = document.getElementById(`ports-${ip}`);
+                
+                if (data.open_ports && data.open_ports.length > 0) {
+                    let portsHTML = '';
+                    data.open_ports.forEach(port => {
+                        portsHTML += `
+                            <div class="port-item">
+                                <strong>Port:</strong> ${port.port}
+                                <strong>Service:</strong> ${port.service || 'Unknown'}
+                            </div>
+                        `;
+                    });
+                    portList.innerHTML = portsHTML;
+                } else {
+                    portList.innerHTML = '<div class="port-item">No open ports detected.</div>';
+                }
+                
+                // Show the port list
+                portList.style.display = 'block';
+            } catch (error) {
+                console.error('Error scanning ports:', error);
+                alert('Error scanning ports. Please try again.');
+            } finally {
+                // Hide spinner and re-enable button
+                spinner.style.display = 'none';
+                button.disabled = false;
+                button.textContent = 'Hide Ports';
+                button.onclick = function() { togglePorts(ip, this); };
+            }
+        }
+        
+        function togglePorts(ip, button) {
+            const portList = document.getElementById(`ports-${ip}`);
+            
+            if (portList.style.display === 'block') {
+                portList.style.display = 'none';
+                button.textContent = 'Show Ports';
+            } else {
+                portList.style.display = 'block';
+                button.textContent = 'Hide Ports';
+            }
+        }
+        
+        async function addToBlacklist(mac) {
+            if (confirm('Are you sure you want to add this device to the blacklist?')) {
+                try {
+                    const response = await fetch(`/blacklist/add/${mac}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert('Device added to blacklist!');
+                        window.location.reload(); // Refresh to update the device list
+                    } else {
+                        alert('Error adding device to blacklist.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while adding the device to blacklist.');
+                }
+            }
+        }
+        
+        async function removeFromBlacklist(mac) {
+            if (confirm('Are you sure you want to remove this device from the blacklist?')) {
+                try {
+                    const response = await fetch(`/blacklist/remove/${mac}`);
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        alert('Device removed from blacklist!');
+                        window.location.reload(); // Refresh to update the device list
+                    } else {
+                        alert('Error removing device from blacklist.');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('An error occurred while removing the device from blacklist.');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Scanner - Home</title>
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Poppins:wght@300;400;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* Styles remain unchanged */
+        :root {
+            --primary-bg: #1c1f2b;
+            --secondary-bg: #2b2d42;
+            --accent-color: #005f73;
+            --hover-color: #3b4a7b;
+            --text-color: #e0e0e0;
+            --white: #ffffff;
+            --shadow-color: rgba(0, 0, 0, 0.3);
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+        body {
+            background: linear-gradient(45deg, var(--secondary-bg), #8d99ae);
+            color: var(--text-color);
+            display: flex;
+            height: 100vh;
+            flex-direction: column;
+            transition: all 0.3s ease;
+        }
+        .sidebar {
+            width: 270px;
+            background: var(--primary-bg);
+            color: var(--text-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100%;
+            box-shadow: 0 6px 30px var(--shadow-color);
+            z-index: 10;
+        }
+        .sidebar h1 {
+            color: var(--white);
+            font-family: 'Playfair Display', serif;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .menu-item {
+            display: block;
+            text-decoration: none;
+            color: var(--text-color);
+            padding: 12px 20px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        .menu-item:hover {
+            background: var(--hover-color);
+            color: var(--white);
+        }
+        .main-content {
+            margin-left: 270px;
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .heading {
+            font-size: 2rem;
+            font-family: 'Poppins', sans-serif;
+            margin-bottom: 20px;
+        }
+        .buttons-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 12px 20px;
+            background: var(--accent-color);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px var(--shadow-color);
+        }
+        .output-box {
+            background: var(--hover-color);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 3px 10px var(--shadow-color);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--primary-bg);
+        }
+
+        th {
+            background: var(--accent-color);
+            color: var(--white);
+        }
+
+        tr:hover {
+            background: var(--hover-color);
+        }
+        .loading-spinner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top: 5px solid var(--accent-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            z-index: 1000;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @media screen and (max-width: 768px) {
+            .sidebar { width: 100%; height: auto; position: static; }
+            .main-content { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <h1>Network Scanner</h1>
+        <a href="/home" class="menu-item">Home</a>
+        <a href="/login" class="menu-item">Login</a>
+        <a href="/aboutus" class="menu-item">About Us</a>
+    </aside>
+
+    <main class="main-content">
+        <div class="heading">Network Scanner Dashboard</div>
+        <div class="buttons-container">
+            <button onclick="fetchNetworkDetails()">Scan Network</button>
+            <button onclick="viewStoredDevices()">View Stored Devices</button>
+        </div>
+        <div class="output-box" id="outputBox">Output will appear here soon...</div>
+        <div id="deviceTableContainer"></div>
+        <label for="mac" >Remove blacklisted device:</label>
+        <input type="text" id="mac" name="mac" placeholder="Enter mac address of device" >
+        <button id="remove_device" onclick="remove_device()">Remove Device</button>
+    </main>
+
+    <div class="loading-spinner" id="loadingSpinner" aria-label="Loading..."></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
+<script>
+    const socket = io.connect("http://localhost:5000", {
+        transports: ["websocket"], // Ensures WebSocket is used instead of polling
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 2000
+    }); // Initialize WebSocket connection
+
+    async function fetchNetworkDetails() {
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const scanButton = document.querySelector('button');
+        loadingSpinner.style.display = 'block';
+        scanButton.disabled = true;
+
+        try {
+            const response = await fetch('/hosts');
+            const data = await response.json();
+
+            loadingSpinner.style.display = 'none';
+            scanButton.disabled = false;
+
+            const outputBox = document.getElementById('outputBox');
+            const deviceTableContainer = document.getElementById('deviceTableContainer');
+
+            if (data.devices.length === 0) {
+                outputBox.innerHTML = `No devices found in the network.`;
+            } else {
+                outputBox.innerHTML = `
+                    <strong>Current IP:</strong> ${data.current_ip}<br>
+                    <strong>Network Range:</strong> ${data.network_range}<br><br>
+                `;
+            }
+
+            let tableHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>IP Address</th>
+                            <th>MAC Address</th>
+                            <th>Hostname</th>
+                            <th>Status</th>
+                            <th>Ports</th>
+                            <th>Blacklist</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.devices.forEach(device => {
+                let portsHTML = `<span class="expand-btn" onclick="fetchOpenPorts2('${device.ip}')">Show Ports</span>
+                <div class="port-list" id="ports-${device.ip}">`;
+
+                // if (device.open_ports && device.open_ports.length > 0) {
+                //     portsHTML = `
+                //         <span class="expand-btn" onclick="togglePortList('${device.ip}')">Show Ports</span>
+                //         <div class="port-list" id="ports-${device.ip}">
+                //     `;
+
+                //     device.open_ports.forEach(port => {
+                //         portsHTML += `
+                            // <div class="port-item">
+                            //     <strong>Port:</strong> ${port.port} (${port.protocol}) 
+                            //     <strong>Service:</strong> ${port.service || 'Unknown'}
+                            // </div>
+                //         `;
+                //     });
+
+                //     portsHTML += `</div>`;
+                // } else {
+                //     portsHTML = 'No open ports detected.';
+                // }
+
+                // tableHTML += `
+                //     <tr>
+                //         <td>${device.ip}</td>
+                //         <td>${device.mac}</td>
+                //         <td>${device.hostname}</td>
+                //         <td>${device.open_ports ? 'Open' : 'Closed'}</td>
+                //         <td>${portsHTML}</td>
+                //     </tr>
+                // `;
+                tableHTML += `
+                    <tr>
+                        <td>${device.ip}</td>
+                        <td>${device.mac}</td>
+                        <td>${device.hostname}</td>
+                        <td id="status-${device.ip}">Not loaded</td>
+                        <td id="ports">${portsHTML}</td>
+                        <td><span class="add_device" onclick="add_device('${device.mac}')">Add device to blacklist</span></td>
+                    </tr>
+                `;
+            });
+
+            tableHTML += '</tbody></table>';
+            deviceTableContainer.innerHTML = tableHTML;
+        } catch (error) {
+            loadingSpinner.style.display = 'none';
+            scanButton.disabled = false;
+            console.error('Error fetching network details:', error);
+        }
+    }
+
+    // socket.on("connect", () => {
+    //     console.log("Connected to WebSocket server!");
+    //     // socket.emit("test_event", { message: "Hello from client!" });
+    // });
+
+    // socket.on("message", (data) => {
+    //     console.log("Message from server:", data);
+    // });
+
+    async function fetchOpenPorts2(ip) {
+        let response = await fetch('http://localhost:5000/scan_port?ip='+ip);
+        let data = await response.json();
+        if (!data || !data.ip) return;
+
+        const portListDiv = document.getElementById(`ports-${data.ip}`);
+        const statusCell = document.getElementById(`status-${data.ip}`);
+        // const button = document.querySelector(`#device-${data.ip} button`);
+
+        if (data.open_ports && data.open_ports.length > 0) {
+            portListDiv.innerHTML = data.open_ports.map(port => `
+                <div class="port-item">
+                    <strong>Port:</strong> ${port.port} (${port.protocol}) 
+                    <strong>Service:</strong> ${port.service || 'Unknown'}
+                </div>
+            `).join('');
+            portListDiv.style.display = 'block';
+            // button.innerText = "Hide Ports";
+            statusCell.innerHTML = 'Open'
+        } else {
+            portListDiv.innerHTML = `<div class="port-item">No open ports detected.</div>`;
+            portListDiv.style.display = 'block';
+            statusCell.innerHTML = 'Closed'
+        }
+    }
+
+    function fetchOpenPorts(ip) {
+        socket.emit("show_open_ports", { ip });
+
+        // Update button text to indicate loading
+        // const button = document.querySelector(`#device-${ip} button`);
+        // button.innerText = "Loading...";
+        // button.disabled = true;
+    }
+
+    async function add_device(mac) {
+        let response = await fetch('http://localhost:5000/blacklist/add/'+mac);
+        let data = await response.json();
+        if (data.success) {
+            alert("Added device to blacklist.");
+        }
+    }
+
+    async function remove_device() {
+        let response = await fetch("http://localhost:5000/blacklist/remove/"+document.getElementById("mac").value);
+        let data = await response.json();
+        if (data.success) {
+            alert("Removed device from blacklist.");
+        }
+    }
+
+    socket.on("open_ports_response", (data) => {
+        if (!data || !data.ip) return;
+
+        const portListDiv = document.getElementById(`ports-${data.ip}`);
+        const statusCell = document.getElementById(`status-${data.ip}`);
+        // const button = document.querySelector(`#device-${data.ip} button`);
+
+        if (data.open_ports && data.open_ports.length > 0) {
+            portListDiv.innerHTML = data.open_ports.map(port => `
+                <div class="port-item">
+                    <strong>Port:</strong> ${port.port} (${port.protocol}) 
+                    <strong>Service:</strong> ${port.service || 'Unknown'}
+                </div>
+            `).join('');
+            portListDiv.style.display = 'block';
+            // button.innerText = "Hide Ports";
+            statusCell.innerHTML = 'Open'
+        } else {
+            portListDiv.innerHTML = `<div class="port-item">No open ports detected.</div>`;
+            portListDiv.style.display = 'block';
+            statusCell.innerHTML = 'Closed'
+        }
+
+        // button.disabled = false;
+        // button.setAttribute("onclick", `togglePorts('${data.ip}')`);
+    });
+
+    function togglePorts(ip) {
+        const portListDiv = document.getElementById(`ports-${ip}`);
+        const button = document.querySelector(`#device-${ip} button`);
+        if (portListDiv.style.display === 'block') {
+            portListDiv.style.display = 'none';
+            button.innerText = "Show Ports";
+        } else {
+            portListDiv.style.display = 'block';
+            button.innerText = "Hide Ports";
+        }
+    }
+    function viewStoredDevices() {
+        window.location.href = '/view_devices';
+    }
+</script>
+
+</body>
+</html>

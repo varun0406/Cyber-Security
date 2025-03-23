@@ -1,4 +1,4 @@
-Capstone frontend\templates\home.html -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -103,6 +103,7 @@ Capstone frontend\templates\home.html -->
             justify-content: center;
             gap: 20px;
             margin-top: 20px;
+            flex-wrap: wrap;
         }
 
         button {
@@ -184,7 +185,9 @@ Capstone frontend\templates\home.html -->
     <nav>
         <ul>
             <li><a href="{{ url_for('home') }}">Home</a></li>
-            <li><a href="{{ url_for('hosts') }}">Devices</a></li>
+            <li><a href="{{ url_for('hosts') }}">Scan Network</a></li>
+            <li><a href="{{ url_for('show_stored_devices') }}">Device History</a></li>
+            <li><a href="{{ url_for('view_blacklist') }}">Blacklist</a></li>
             <li><a href="{{ url_for('aboutus') }}">About Us</a></li>
             <li><a href="{{ url_for('logout') }}">Logout</a></li>
         </ul>
@@ -200,7 +203,7 @@ Capstone frontend\templates\home.html -->
         {% endif %}
     {% endwith %}
 
-    <h1>Welcome {{ current_user.username }}!</h1>
+    <h1>Welcome, {{ current_user.username }}!</h1>
     
     <div class="main-content">
         <h2>Network Scanner Dashboard</h2>
@@ -209,6 +212,7 @@ Capstone frontend\templates\home.html -->
         <div class="buttons-container">
             <button onclick="window.location.href='{{ url_for('hosts') }}'">Scan Network</button>
             <button onclick="window.location.href='{{ url_for('show_stored_devices') }}'">View Device History</button>
+            <button onclick="window.location.href='{{ url_for('view_blacklist') }}'">Manage Blacklist</button>
         </div>
     </div>
 
