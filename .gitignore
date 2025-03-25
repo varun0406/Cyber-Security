@@ -1,1 +1,6 @@
-./cred.json
+config.json
+cred.json
+*.db
+__pycache__/
+*.py[cod]
+*$py.class
