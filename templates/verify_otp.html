@@ -1,0 +1,245 @@
+\Capstone frontend\templates\verify_otp.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OTP Verification - Network Scanner</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Poppins:wght@300;400;600&family=Playfair+Display:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(45deg, #2b2d42, #8d99ae);
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 20px;
+        }
+
+        .form-container {
+            background-color: #1c1f2b;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 6px 30px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 40px;
+            color: #005f73;
+            margin-bottom: 15px;
+        }
+
+        .form-container h2 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 500;
+            text-transform: uppercase;
+            margin-bottom: 35px;
+            color: #f4f4f9;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+
+        .form-container p {
+            color: #d9d9d9;
+            margin-bottom: 25px;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #3b4a7b;
+            transition: all 0.3s;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            border: 2px solid #3b4a7b;
+            border-radius: 10px;
+            background-color: #2b2d42;
+            color: #f4f4f9;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            letter-spacing: 3px;
+            text-align: center;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #006f8e;
+            box-shadow: 0 0 8px rgba(0, 95, 115, 0.5);
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: #005f73;
+            color: #ffffff;
+            border: none;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.4s ease;
+            box-shadow: 0 5px 12px rgba(0, 95, 115, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 15px;
+        }
+
+        button i {
+            margin-right: 10px;
+        }
+
+        button:hover {
+            background: #007991;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 95, 115, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .alert {
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .alert i {
+            margin-right: 10px;
+            font-size: 20px;
+        }
+        
+        .alert-success {
+            background-color: rgba(212, 237, 218, 0.9);
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        
+        .alert-danger {
+            background-color: rgba(248, 215, 218, 0.9);
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+
+        .resend-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: #8d99ae;
+            text-decoration: none;
+        }
+
+        .resend-link:hover {
+            color: #f4f4f9;
+        }
+
+        .timer {
+            text-align: center;
+            margin-top: 15px;
+            color: #8d99ae;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="logo-container">
+            <i class="fas fa-shield-alt logo"></i>
+            <h2>Two-Factor Authentication</h2>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {% if category == 'success' %}
+                            <i class="fas fa-check-circle"></i>
+                        {% else %}
+                            <i class="fas fa-exclamation-triangle"></i>
+                        {% endif %}
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <p>A verification code has been sent to your email. Please enter it below to complete your login.</p>
+
+      <!-- In your form section -->
+<form method="POST" action="{{ url_for('verify_otp') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    
+    <div class="input-group">
+        <i class="fas fa-key"></i>
+        <input type="text" name="otp_code" id="otp_code" placeholder="Enter OTP code" required autofocus maxlength="6">
+    </div>
+    
+    <button type="submit">
+        <i class="fas fa-check-circle"></i>Verify Code
+    </button>
+</form>
+
+        <div class="timer" id="countdown">Code expires in: 30 seconds</div>
+
+        <a href="{{ url_for('send_otp') }}" class="resend-link">Didn't receive the code? Resend</a>
+        <!-- Add this below the resend link -->
+<a href="{{ url_for('login') }}" class="resend-link" style="margin-top: 10px;">
+    Return to login page
+</a>
+    </div>
+
+    <script>
+        // Countdown timer for OTP expiration
+        let timeLeft = 30;
+        const countdownElement = document.getElementById('countdown');
+        
+        const countdownTimer = setInterval(function() {
+            timeLeft--;
+            
+            if (timeLeft <= 0) {
+                clearInterval(countdownTimer);
+                countdownElement.innerHTML = "Code expired. Please request a new one.";
+            } else {
+                countdownElement.innerHTML = `Code expires in: ${timeLeft} seconds`;
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

@@ -1,27 +1,72 @@
+import os
 import time
 import nmap
 import socket
 import sqlite3
 import subprocess
-from flask import Flask, jsonify, render_template, request, redirect, url_for, flash
+from flask import Flask, jsonify, render_template, request, redirect, url_for, flash, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from datetime import datetime
+import datetime as dt
+from werkzeug.security import generate_password_hash, check_password_hash
+from functools import wraps
+from flask_wtf.csrf import CSRFProtect
+import pyotp
+from flask_mail import Mail, Message
+import secrets
+import json
 
 # Flask app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+file = open('config.json', 'r')
+config = json.load(file)
+# Add CSRF protection to forms
+app.config['WTF_CSRF_ENABLED'] = True
+app.config['WTF_CSRF_SECRET_KEY'] = 'your-csrf-secret-key'
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = config.MAIL_USERNAME  # Your Gmail address
+app.config['MAIL_PASSWORD'] = config.MAIL_PASSWORD  # Your Gmail password   
+app.config['MAIL_DEFAULT_SENDER'] = ('Network Scanner', config.MAIL_USERNAME)
+mail=Mail(app)
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
-
+csrf = CSRFProtect(app)
 # User model
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
-    password = db.Column(db.String(150), nullable=False)
-
+    password_hash = db.Column(db.String(256))
+    email = db.Column(db.String(150), nullable=True)  # Add email field
+    last_login = db.Column(db.DateTime)
+    login_attempts = db.Column(db.Integer, default=0)
+    locked_until = db.Column(db.DateTime)
+    otp_secret = db.Column(db.String(32))  # Secret for OTP generation
+    otp_enabled = db.Column(db.Boolean, default=False)  # Whether 2FA is enabled
+    
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+        
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+    
+    def get_totp_uri(self):
+        """Generate the OTP provisioning URI"""
+        return pyotp.totp.TOTP(self.otp_secret).provisioning_uri(
+            name=self.username, 
+            issuer_name="Network Scanner"
+        )
+    
+    def verify_otp(self, otp_code):
+        """Verify the provided OTP code"""
+        totp = pyotp.TOTP(self.otp_secret)
+        return totp.verify(otp_code)
+    
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -82,7 +127,39 @@ def is_blacklisted(mac):
     result = c.fetchone()
     conn.close()
     return result is not None
-
+def get_hostname(ip):
+    """Attempt to resolve the hostname of an IP address."""
+    try:
+        hostname = socket.gethostbyaddr(ip)[0]
+        return hostname
+    except Exception:
+        try:
+            # Fallback to nmap for hostname resolution
+            output = subprocess.check_output(['nmap', '-sL', ip], text=True)
+            for line in output.splitlines():
+                if ip in line and "(" in line and ")" in line:
+                    hostname = line.split("(")[0].strip()
+                    if hostname and hostname != ip:
+                        return hostname
+            return "Unknown"
+        except Exception as e:
+            print(f"Error retrieving hostname with nmap for {ip}: {e}")
+            return "Unknown"
+        
+def get_mac_from_arp(ip):
+    """Get the MAC address of a device using the ARP table."""
+    try:
+        output = subprocess.check_output(['arp', '-a', ip], text=True)
+        for line in output.splitlines():
+            if ip in line:
+                parts = line.split()
+                for part in parts:
+                    if '-' in part or ':' in part:  # MAC addresses typically contain - or :
+                        return part
+        return "N/A"
+    except Exception as e:
+        print(f"Error retrieving MAC address for {ip}: {e}")
+        return "N/A"
 def add_device_to_db(ip, mac, hostname):
     """Insert or update device information in the SQLite database."""
     conn = sqlite3.connect('network_devices.db')
@@ -188,7 +265,7 @@ def scan_connected_devices(ip_range):
     
     try:
         print(f"Scanning network range: {ip_range}")
-        scanner.scan(hosts=ip_range, arguments='-sn')  # Ping scan
+        scanner.scan(hosts=ip_range, arguments='-Pn -T5 -F')  # Ping scan
         
         for host in scanner.all_hosts():
             if scanner[host].state() == "up":
@@ -256,7 +333,75 @@ def get_bssid():
         return "Unknown"
 
 # Routes
+@app.route('/send_otp', methods=['GET', 'POST'])
+def send_otp():
+    """Send OTP via email for 2FA"""
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    
+    user = User.query.filter_by(username=session['username']).first()
+    if not user or not user.email:
+        flash('User not found or email not configured', 'danger')
+        return redirect(url_for('login'))
+    
+    # Generate OTP secret if not already set
+    if not user.otp_secret:
+        user.otp_secret = pyotp.random_base32()
+        db.session.commit()
+    
+    # Generate OTP code
+    totp = pyotp.TOTP(user.otp_secret)
+    otp_code = totp.now()
+    
+    # Send email with OTP
+    try:
+        msg = Message('Your OTP Code for Network Scanner', recipients=[user.email])
+        msg.body = f"""Hello {user.username},
 
+Your one-time password (OTP) for Network Scanner login is: {otp_code}
+
+This code will expire in 30 seconds. If you did not request this code, please ignore this email.
+
+Regards,
+Network Scanner Security Team
+"""
+        mail.send(msg)
+        flash('OTP sent to your email', 'success')
+        return render_template('verify_otp.html')
+    except Exception as e:
+        flash(f'Failed to send OTP: {str(e)}', 'danger')
+        return redirect(url_for('login'))
+
+@app.route('/verify_otp', methods=['POST'])
+def verify_otp():
+    """Verify OTP code for 2FA"""
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    
+    otp_code = request.form.get('otp_code')
+    user = User.query.filter_by(username=session['username']).first()
+    
+    if not otp_code or not user:
+        flash('Invalid OTP code or user not found', 'danger')
+        return render_template('verify_otp.html')
+    
+    # Verify OTP
+    if user.verify_otp(otp_code):
+        # Login successful with OTP
+        login_user(user)
+        user.login_attempts = 0
+        user.last_login = dt.datetime.now()
+        db.session.commit()
+        
+        session.permanent = True
+        app.permanent_session_lifetime = dt.timedelta(minutes=30)
+        
+        next_page = session.pop('next', url_for('home'))
+        flash('Logged in successfully!', 'success')
+        return redirect(next_page)
+    else:
+        flash('Invalid OTP code. Please try again.', 'danger')
+        return render_template('verify_otp.html')
 @app.route('/')
 def index():
     """Redirect to login page or home if already logged in."""
@@ -264,6 +409,7 @@ def index():
         return redirect(url_for('home'))
     return redirect(url_for('login'))
 
+# Update your signup route for secure password storage
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     """Handle user registration."""
@@ -281,7 +427,8 @@ def signup():
             flash('Username already exists', 'danger')
             return redirect(url_for('login'))
 
-        new_user = User(username=username, password=password)
+        new_user = User(username=username)
+        new_user.set_password(password)  # Use secure password storage
         db.session.add(new_user)
         db.session.commit()
         flash('Account created successfully!', 'success')
@@ -289,26 +436,101 @@ def signup():
 
     return redirect(url_for('login'))
 
+# Enhance session security with timeout enforcement
+@app.before_request
+def check_session_timeout():
+    if current_user.is_authenticated:
+        # Force re-authentication after session timeout
+        session.modified = True
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """Handle user login."""
+    """Handle user login with X.800 compliance and 2FA."""
     if current_user.is_authenticated:
         return redirect(url_for('home'))
         
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        remember = True if request.form.get('remember') else False
+        
         user = User.query.filter_by(username=username).first()
         
-        if user and user.password == password:
-            login_user(user)
-            next_page = request.form.get('next', url_for('home'))
-            flash('Logged in successfully!', 'success')
-            return redirect(next_page)
+        # Check if account is locked
+        if user and user.locked_until and user.locked_until > dt.datetime.now():
+            lock_minutes = (user.locked_until - dt.datetime.now()).seconds // 60
+            flash(f'Account is locked. Try again in {lock_minutes} minutes.', 'danger')
+            return render_template('login.html')
+            
+        if user and user.check_password(password):
+            # Store username in session for 2FA
+            session['username'] = user.username
+            session['next'] = request.args.get('next', url_for('home'))
+            session['remember'] = remember
+            
+            # If 2FA is enabled for this user
+            if user.otp_enabled and user.email:
+                # Redirect to send_otp route instead of calling it directly
+                return redirect(url_for('send_otp'))
+            else:
+                # No 2FA, proceed with normal login
+                user.login_attempts = 0
+                user.last_login = dt.datetime.now()
+                db.session.commit()
+                
+                login_user(user, remember=remember)
+                session.permanent = True
+                app.permanent_session_lifetime = dt.timedelta(minutes=30)
+                next_page = request.args.get('next', url_for('home'))
+                flash('Logged in successfully!', 'success')
+                return redirect(next_page)
         else:
+            if user:
+                # Increment failed login attempts
+                user.login_attempts += 1
+                if user.login_attempts >= 5:  # Lock after 5 failed attempts
+                    user.locked_until = dt.datetime.now() + dt.timedelta(minutes=15)
+                    flash('Too many failed attempts. Account locked for 15 minutes.', 'danger')
+                db.session.commit()
             flash('Login unsuccessful. Please check username and password', 'danger')
     
     return render_template('login.html')
+@app.route('/profile', methods=['GET'])
+@login_required
+def profile():
+    """User profile page with 2FA settings"""
+    return render_template('profile.html', user=current_user)
+
+@app.route('/enable_2fa', methods=['GET', 'POST'])
+@login_required
+def enable_2fa():
+    """Enable 2FA for the current user"""
+    if request.method == 'POST':
+        email = request.form.get('email')
+        if not email:
+            flash('Email is required for 2FA', 'danger')
+            return redirect(url_for('profile'))
+        
+        # Update user's email and generate OTP secret
+        current_user.email = email
+        current_user.otp_secret = pyotp.random_base32()
+        current_user.otp_enabled = True
+        db.session.commit()
+        
+        flash('2FA has been enabled for your account', 'success')
+        return redirect(url_for('profile'))
+    
+    return render_template('enable_2fa.html')
+
+@app.route('/disable_2fa', methods=['POST'])
+@login_required
+def disable_2fa():
+    """Disable 2FA for the current user"""
+    current_user.otp_enabled = False
+    db.session.commit()
+    flash('2FA has been disabled for your account', 'success')
+    return redirect(url_for('profile'))
+
+
 
 @app.route('/logout')
 @login_required
