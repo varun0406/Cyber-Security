@@ -21,7 +21,7 @@ import json
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
-file = open('config.json', 'r')
+file = open('cred.json', 'r')
 config = json.load(file)
 # Add CSRF protection to forms
 app.config['WTF_CSRF_ENABLED'] = True
@@ -29,9 +29,9 @@ app.config['WTF_CSRF_SECRET_KEY'] = 'your-csrf-secret-key'
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = config.MAIL_USERNAME  # Your Gmail address
-app.config['MAIL_PASSWORD'] = config.MAIL_PASSWORD  # Your Gmail password   
-app.config['MAIL_DEFAULT_SENDER'] = ('Network Scanner', config.MAIL_USERNAME)
+app.config['MAIL_USERNAME'] ="kotwaniv03@gmail.com"  # Your Gmail address
+app.config['MAIL_PASSWORD'] = "pzp pyij zqyh xxou"  # Your Gmail password   
+app.config['MAIL_DEFAULT_SENDER'] = ('Network Scanner', "kotwaniv03@gmail.com")
 mail=Mail(app)
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
