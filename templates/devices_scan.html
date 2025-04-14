@@ -215,6 +215,10 @@
             padding: 12px 25px;
             font-size: 1rem;
         }
+
+        .critical {
+            background-color: rgba(230, 57, 70, 0.3);
+        }
     </style>
 </head>
 <body>
@@ -262,27 +266,12 @@
                 </thead>
                 <tbody>
                     {% for device in devices %}
-                        <tr {% if device.is_blacklisted %}class="blacklisted"{% endif %}>
+                        <tr class="{% if device.has_critical_vulnerabilities %}critical{% endif %}">
                             <td>{{ device.ip }}</td>
                             <td>{{ device.mac }}</td>
                             <td>{{ device.hostname }}</td>
-                            <td>{% if device.is_blacklisted %}Blacklisted{% else %}Active{% endif %}</td>
-                            <td>
-                                <button onclick="scanPorts('{{ device.ip }}', this)">Scan Ports</button>
-                                <div id="ports-{{ device.ip }}" class="port-list"></div>
-                                <div id="spinner-{{ device.ip }}" class="loading-spinner"></div>
-                            </td>
-                            <td>
-                                {% if not device.is_blacklisted %}
-                                    <button class="action-button blacklist-button" onclick="addToBlacklist('{{ device.mac }}')">
-                                        Add to Blacklist
-                                    </button>
-                                {% else %}
-                                    <button class="action-button" onclick="removeFromBlacklist('{{ device.mac }}')">
-                                        Remove from Blacklist
-                                    </button>
-                                {% endif %}
-                            </td>
+                            <td>{{ device.status }}</td>
+                            <td>{{ device.vulnerabilities|length }} vulnerabilities</td>
                         </tr>
                     {% endfor %}
                 </tbody>
@@ -294,7 +283,7 @@
         {% endif %}
     </div>
     
-    <button onclick="window.location.href='{{ url_for('home') }}'" class="back-button">Back to Home</button>
+    <button type="button" onclick="window.location.href='{{ url_for('home') }}';" class="back-button">Back to Home</button>
 
     <script>
         async function scanPorts(ip, button) {

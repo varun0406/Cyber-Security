@@ -66,7 +66,32 @@ class User(UserMixin, db.Model):
         """Verify the provided OTP code"""
         totp = pyotp.TOTP(self.otp_secret)
         return totp.verify(otp_code)
-    
+import subprocess
+import re
+
+def scan_vulnerabilities(ip):
+    """Run Nmap with vulners.nse to scan for vulnerabilities."""
+    try:
+        output = subprocess.check_output(
+            ['nmap', '-sV', '--script', 'vulners', ip],
+            text=True
+        )
+        vulnerabilities = []
+        for line in output.splitlines():
+            match = re.search(r'CVE-\d{4}-\d{4,7}', line)
+            if match:
+                cve_id = match.group(0)
+                severity = "Unknown"  # You can enhance this by parsing severity from the output
+                vulnerabilities.append({
+                    "cve_id": cve_id,
+                    "severity": severity,
+                    "description": f"Details for {cve_id}"
+                })
+        return vulnerabilities
+    except Exception as e:
+        print(f"Error scanning vulnerabilities for {ip}: {e}")
+        return []
+        
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -93,8 +118,27 @@ STREAMING_PORTS = {
 # General ports to scan for basic device functionality
 GENERAL_PORTS = "20,21,22,23,25,80,139,443,445,554,587,8000,8080,8888"
 
+def create_vulnerabilities_table():
+    """Create vulnerabilities table if it doesn't exist."""
+    conn = sqlite3.connect('network_devices.db')
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS vulnerabilities (
+            id INTEGER PRIMARY KEY,
+            device_mac TEXT,
+            cve_id TEXT,
+            severity TEXT,
+            description TEXT,
+            added_on TEXT,
+            FOREIGN KEY (device_mac) REFERENCES devices(mac)
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+# Call this function in `create_db`
 def create_db():
-    """Create SQLite database and devices table if not exists."""
+    """Create all necessary tables."""
     conn = sqlite3.connect('network_devices.db')
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS devices
@@ -103,13 +147,23 @@ def create_db():
     conn.commit()
     conn.close()
     
-    # Create blacklist table
     create_blacklist_table()
+    create_vulnerabilities_table()  # Add this line
     
-    # Create users table
     with app.app_context():
         db.create_all()
-
+def save_vulnerabilities(mac, vulnerabilities):
+    """Save vulnerabilities to the database."""
+    conn = sqlite3.connect('network_devices.db')
+    c = conn.cursor()
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    for vuln in vulnerabilities:
+        c.execute('''
+            INSERT INTO vulnerabilities (device_mac, cve_id, severity, description, added_on)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (mac, vuln['cve_id'], vuln['severity'], vuln['description'], now))
+    conn.commit()
+    conn.close()
 def create_blacklist_table():
     """Create blacklist table if it doesn't exist."""
     conn = sqlite3.connect('network_devices.db')
@@ -670,6 +724,57 @@ def view_blacklist():
 
 # Required modules
 import os
+from apscheduler.schedulers.background import BackgroundScheduler
+
+def scheduled_vulnerability_scan():
+    """Run periodic vulnerability scans."""
+    devices = view_devices()
+    for device in devices:
+        vulnerabilities = scan_vulnerabilities(device['ip'])
+        save_vulnerabilities(device['mac'], vulnerabilities)
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(scheduled_vulnerability_scan, 'interval', hours=24)  # Run daily
+scheduler.start()
+
+def send_alert(email, mac, vulnerabilities):
+    """Send email alerts for critical vulnerabilities."""
+    critical_vulns = [v for v in vulnerabilities if v['severity'] == 'Critical']
+    if not critical_vulns:
+        return
+    
+    msg = Message(
+        "Critical Vulnerabilities Detected",
+        recipients=[email]
+    )
+    msg.body = f"Device {mac} has the following critical vulnerabilities:\n\n"
+    for vuln in critical_vulns:
+        msg.body += f"- {vuln['cve_id']}: {vuln['description']}\n"
+    mail.send(msg)
+
+import csv
+
+@app.route('/export_report', methods=['GET'])
+@login_required
+def export_report():
+    """Export vulnerabilities to a CSV file."""
+    devices = view_devices()
+    filename = 'vulnerability_report.csv'
+    with open(filename, 'w', newline='') as csvfile:
+        fieldnames = ['IP', 'MAC', 'Hostname', 'CVE ID', 'Severity', 'Description']
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer.writeheader()
+        for device in devices:
+            for vuln in device.get('vulnerabilities', []):
+                writer.writerow({
+                    'IP': device['ip'],
+                    'MAC': device['mac'],
+                    'Hostname': device['hostname'],
+                    'CVE ID': vuln['cve_id'],
+                    'Severity': vuln['severity'],
+                    'Description': vuln['description']
+                })
+    return jsonify({"message": "Report generated successfully", "file": filename})
 
 if __name__ == "__main__":
     create_db()
